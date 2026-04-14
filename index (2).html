@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Базару Нет — Шпион</title>
+<!-- Telegram Mini App SDK — обязательно первым -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+  --bg:       #0a0a0f;
+  --card:     #14141e;
+  --border:   #252535;
+  --red:      #e8001d;
+  --gold:     #ffd700;
+  --text:     #f0f0f0;
+  --muted:    rgba(240,240,240,0.35);
+  --btn-h:    56px;
+  --radius:   16px;
+}
+
+/* Подхватываем тему Telegram если есть */
+body.tg-theme {
+  --bg:     var(--tg-theme-bg-color, #0a0a0f);
+  --card:   var(--tg-theme-secondary-bg-color, #14141e);
+  --text:   var(--tg-theme-text-color, #f0f0f0);
+  --muted:  var(--tg-theme-hint-color, rgba(240,240,240,0.35));
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ═══════════════════════════════════
+   SCREENS
+═══════════════════════════════════ */
+.screen {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px);
+  background: var(--bg);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  z-index: 1;
+  will-change: opacity, transform;
+}
+.screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96) translateY(8px);
+}
+
+/* ═══════════════════════════════════
+   INTRO
+═══════════════════════════════════ */
+#intro { cursor: pointer; z-index: 10; gap: 0; }
+
+.intro-eyebrow {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 5px; text-transform: uppercase;
+  color: rgba(240,240,240,0.28); margin-bottom: 14px;
+}
+.intro-title-main {
+  font-size: clamp(78px, 24vw, 110px);
+  font-weight: 900; line-height: 0.88;
+  letter-spacing: -3px; text-align: center; color: #fff;
+}
+.intro-title-red {
+  font-size: clamp(78px, 24vw, 110px);
+  font-weight: 900; line-height: 0.88;
+  letter-spacing: -3px; text-align: center;
+  color: var(--red);
+  text-shadow: 0 0 50px rgba(232,0,29,0.55);
+  margin-bottom: 18px;
+}
+.intro-edition {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1px;
+}
+.edition-number {
+  font-size: clamp(52px, 16vw, 76px);
+  font-weight: 900; color: var(--gold);
+  line-height: 1; letter-spacing: 4px;
+  text-shadow: 0 0 24px rgba(255,215,0,0.38);
+}
+.edition-label {
+  font-size: 8px; letter-spacing: 6px;
+  text-transform: uppercase; color: rgba(255,215,0,0.4);
+}
+.intro-line {
+  width: 48px; height: 2px; margin: 22px 0;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+}
+.intro-tap {
+  font-size: 8px; letter-spacing: 4px;
+  text-transform: uppercase; color: rgba(240,240,240,0.18);
+  animation: blink 2.2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:.18} 50%{opacity:.6} }
+
+/* ═══════════════════════════════════
+   SETUP
+═══════════════════════════════════ */
+.setup-logo {
+  font-size: clamp(60px, 18vw, 84px);
+  font-weight: 900; letter-spacing: 5px;
+  color: var(--red); line-height: 1;
+  text-shadow: 0 0 32px rgba(232,0,29,0.38);
+}
+.setup-sub {
+  font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--muted); margin-top: 4px; margin-bottom: 36px;
+}
+.field-label {
+  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px; align-self: flex-start;
+}
+.counter-row {
+  display: flex; align-items: center;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 18px; width: 100%; max-width: 280px;
+}
+.cnt-btn {
+  flex: 0 0 64px; height: 64px; background: none; border: none;
+  color: var(--text); font-size: 30px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s;
+}
+.cnt-btn:active { background: var(--border); }
+.cnt-val {
+  flex: 1; text-align: center; font-size: 42px; font-weight: 900;
+  color: #fff; line-height: 64px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.players-chips {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 32px;
+  width: 100%; max-width: 300px;
+}
+.chip {
+  font-size: 8px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; padding: 7px 14px; border-radius: 8px;
+  background: rgba(255,255,255,0.07); color: rgba(240,240,240,0.78);
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: all 0.18s;
+}
+.chip.off {
+  background: rgba(255,255,255,0.02); color: rgba(240,240,240,0.14);
+  border-color: rgba(255,255,255,0.05);
+}
+
+/* ═══════════════════════════════════
+   BUTTONS
+═══════════════════════════════════ */
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; max-width: 300px; height: var(--btn-h);
+  border: none; border-radius: var(--radius);
+  font-family: inherit; font-weight: 700; font-size: 13px;
+  letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  transition: transform 0.12s, opacity 0.12s;
+  user-select: none; -webkit-user-select: none;
+}
+.btn:active { transform: scale(0.96); opacity: 0.88; }
+
+.btn-red {
+  background: var(--red); color: #fff;
+  box-shadow: 0 8px 28px rgba(232,0,29,0.32);
+}
+.btn-ghost {
+  background: var(--card); color: rgba(240,240,240,0.6);
+  border: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════
+   CARD SCREEN
+═══════════════════════════════════ */
+#card-screen {
+  justify-content: space-between;
+  padding-top: max(env(safe-area-inset-top, 0px), 32px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 28px);
+  padding-left: 20px; padding-right: 20px;
+}
+
+.cat-block {
+  width: 100%; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.cat-eyebrow {
+  font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(240,240,240,0.26);
+}
+.cat-name {
+  font-size: clamp(17px, 5vw, 22px); font-weight: 800;
+  color: #fff; line-height: 1.2;
+}
+
+.player-block { text-align: center; }
+.player-eyebrow {
+  font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--muted);
+}
+.player-number {
+  font-size: 56px; font-weight: 900; color: var(--text); line-height: 1.05;
+}
+
+/* THE CARD */
+.card-shell {
+  position: relative;
+  width: 100%; max-width: 320px; height: 190px;
+  flex-shrink: 0;
+}
+.card-face {
+  position: absolute; top:0; left:0; right:0; bottom:0;
+  border-radius: 20px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px; gap: 8px;
+}
+
+/* BACK */
+.c-back {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+}
+.c-back:active { background: #1a1a28; }
+.c-eye { font-size: 28px; opacity: 0.2; }
+.c-hint {
+  font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(240,240,240,0.18); text-align: center;
+}
+.c-dots {
+  position: absolute; bottom: 13px; left:0; right:0;
+  display: flex; justify-content: center; gap: 6px;
+}
+.c-dot {
+  width: 18px; height: 3px; background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  animation: dotPulse 1.9s ease-in-out infinite;
+}
+.c-dot:nth-child(2) { animation-delay: .32s; }
+.c-dot:nth-child(3) { animation-delay: .64s; }
+@keyframes dotPulse { 0%,100%{opacity:.18} 50%{opacity:.55} }
+
+/* FRONT */
+.c-front {
+  background: linear-gradient(140deg, #1b1b2e 0%, #0e2d5a 100%);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  box-shadow: 0 18px 52px rgba(0,0,0,0.55);
+  display: none;
+}
+.c-front.is-spy {
+  background: linear-gradient(140deg, #1c0505 0%, #300909 100%);
+  border-color: rgba(232,0,29,0.38);
+  box-shadow: 0 18px 52px rgba(232,0,29,0.18);
+}
+.c-role {
+  font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
+  color: rgba(240,240,240,0.38);
+}
+.c-word {
+  font-size: clamp(26px, 8vw, 38px); font-weight: 900;
+  letter-spacing: 0.5px; text-align: center; line-height: 1.15; color: #fff;
+}
+.c-front.is-spy .c-word { color: var(--red); }
+
+/* reveal states */
+.card-shell.revealed .c-back { display: none; }
+.card-shell.revealed .c-front { display: flex; }
+
+@keyframes slideOff {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(108%); opacity: 0; }
+}
+@keyframes slideIn {
+  from { transform: translateX(-30px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.card-shell.animating .c-back {
+  animation: slideOff .28s ease-in forwards;
+}
+.card-shell.animating .c-front {
+  display: flex;
+  animation: slideIn .28s ease-out .14s both;
+}
+
+/* pass button (invisible until revealed) */
+#pass-btn {
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+#pass-btn.show { opacity: 1; pointer-events: auto; }
+
+/* ═══════════════════════════════════
+   END SCREEN
+═══════════════════════════════════ */
+.end-title {
+  font-size: clamp(52px, 16vw, 72px); font-weight: 900;
+  color: var(--text); text-align: center; line-height: 1; margin-bottom: 10px;
+}
+.end-sub {
+  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(240,240,240,0.24); margin-bottom: 44px; text-align: center;
+  padding: 0 20px; line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<!-- ── INTRO ── -->
+<div class="screen" id="intro">
+  <div class="intro-eyebrow">Добро пожаловать в</div>
+  <div class="intro-title-main">БАЗАРУ</div>
+  <div class="intro-title-red">НЕТ</div>
+  <div class="intro-edition">
+    <div class="edition-number">163</div>
+    <div class="edition-label">Edition</div>
+  </div>
+  <div class="intro-line"></div>
+  <div class="intro-tap">Нажмите чтобы начать</div>
+</div>
+
+<!-- ── SETUP ── -->
+<div class="screen hidden" id="setup">
+  <div class="setup-logo">ШПИОН</div>
+  <div class="setup-sub">Социальная игра</div>
+  <div class="field-label">Количество игроков</div>
+  <div class="counter-row">
+    <button class="cnt-btn" id="minus" type="button">−</button>
+    <div class="cnt-val" id="cnt-val">4</div>
+    <button class="cnt-btn" id="plus" type="button">+</button>
+  </div>
+  <div class="players-chips" id="chips">
+    <div class="chip" data-i="1">Игрок 1</div>
+    <div class="chip" data-i="2">Игрок 2</div>
+    <div class="chip" data-i="3">Игрок 3</div>
+    <div class="chip" data-i="4">Игрок 4</div>
+    <div class="chip off" data-i="5">Игрок 5</div>
+  </div>
+  <button class="btn btn-red" id="start-btn" type="button">Начать игру</button>
+</div>
+
+<!-- ── CARD ── -->
+<div class="screen hidden" id="card-screen">
+  <div class="cat-block">
+    <div class="cat-eyebrow">Категория — видят все</div>
+    <div class="cat-name" id="cat-name">—</div>
+  </div>
+
+  <div class="player-block">
+    <div class="player-eyebrow">Игрок</div>
+    <div class="player-number" id="player-num">1</div>
+  </div>
+
+  <div class="card-shell" id="card-shell">
+    <div class="card-face c-back" id="c-back">
+      <div class="c-eye">👁</div>
+      <div class="c-hint">Нажмите или сдвиньте карточку</div>
+      <div class="c-dots">
+        <div class="c-dot"></div><div class="c-dot"></div><div class="c-dot"></div>
+      </div>
+    </div>
+    <div class="card-face c-front" id="c-front">
+      <div class="c-role" id="c-role">Твоё слово</div>
+      <div class="c-word" id="c-word">—</div>
+    </div>
+  </div>
+
+  <button class="btn btn-ghost" id="pass-btn" type="button">Передать</button>
+</div>
+
+<!-- ── END ── -->
+<div class="screen hidden" id="end-screen">
+  <div class="end-title">Игра<br>идёт!</div>
+  <div class="end-sub">Обсуждайте между собой<br>и вычисляйте шпиона</div>
+  <button class="btn btn-red" id="restart-btn" type="button">Начать заново</button>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   TELEGRAM MINI APP INIT
+══════════════════════════════════════ */
+var tg = window.Telegram && window.Telegram.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+  // Применяем цветовую схему Telegram
+  if (tg.colorScheme === 'dark' || !tg.colorScheme) {
+    document.body.classList.add('tg-theme');
+  }
+  // Настраиваем цвет хедера под игру
+  tg.setHeaderColor && tg.setHeaderColor('#0a0a0f');
+  tg.setBackgroundColor && tg.setBackgroundColor('#0a0a0f');
+}
+
+// Haptic feedback хелпер
+function haptic(type) {
+  if (!tg || !tg.HapticFeedback) return;
+  if (type === 'light')   tg.HapticFeedback.impactOccurred('light');
+  if (type === 'medium')  tg.HapticFeedback.impactOccurred('medium');
+  if (type === 'heavy')   tg.HapticFeedback.impactOccurred('heavy');
+  if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+  if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+  if (type === 'error')   tg.HapticFeedback.notificationOccurred('error');
+  if (type === 'select')  tg.HapticFeedback.selectionChanged();
+}
+
+var CATS = {
+  "Место": [
+    "Аэропорт","Вокзал","Больница","Тюрьма","Банк","Казино","Стадион","Музей","Зоопарк","Библиотека","Кладбище","Суд","Морской порт","Торговый центр","Цирк","Роддом","Психиатрическая клиника",
+    "Ресторан","Фастфуд","Кофейня","Суши-бар","Столовая","Пекарня","Ночной клуб","Пивной бар","Шашлычная","Рюмочная",
+    "Пляж","Горнолыжный курорт","Аквапарк","Кинотеатр","Боулинг","Картинг","Квест-комната","Спа-салон","Парк аттракционов","Каток","Батутный центр","Сауна","Стриптиз-клуб",
+    "Офис","Завод","Стройка","Шахта","Нефтяная платформа","Электростанция","Лаборатория","Склад","Автосервис","Пожарная станция","Морг","Ферма","Скотобойня",
+    "Самолёт","Подводная лодка","Круизный лайнер","Поезд","Метро","Яхта","Космическая станция","Паром","Скорая помощь","Броневик","Атомная подлодка",
+    "Пустыня","Джунгли","Антарктида","Вулкан","Пещера","Болото","Водопад","Горный перевал","Тундра","Тайга","Фьорд","Подводный риф",
+    "Военная база","Бункер","Зона отчуждения","Пиратский корабль","Ядерный реактор","Мафиозный штаб","Орбитальная станция","Чернобыль","Логово мафии",
+    "Средневековый замок","Египетская пирамида","Колизей","Катакомбы","Форт","Монастырь","Арена гладиаторов","Императорский дворец","Маяк","Пиратская крепость",
+    "Барбершоп","Ломбард","Тату-салон","Хостел","Подвальный бар","Прачечная","Ритуальный салон","Секонд-хенд","Игровой клуб","Гадалка",
+    "Университет","Военная академия","Языковая школа","Разведывательная академия","Школа поваров","Лётное училище","Кадетский корпус","Медицинский вуз"
+  ],
+  "Событие": [
+    "Свадьба","Похороны","Выпускной","Карнавал","Корпоратив","Фестиваль музыки","Олимпиада","Концерт","Революция","Государственный переворот",
+    "Инаугурация президента","Судебный процесс","Пресс-конференция","Парад победы","День рождения","Новый год","Хэллоуин",
+    "Пожар","Авиакатастрофа","Землетрясение","Ограбление банка","Кораблекрушение","Эпидемия","Наводнение","Захват заложников","Теракт","Тюремный побег",
+    "Чемпионат мира","Финал Лиги чемпионов","Боксёрский поединок","Гонки Формулы 1","Аукцион","Модный показ","Кинопремьера","Вручение Оскара"
+  ],
+  "Профессия": [
+    "Хирург","Дипломат","Наёмник","Шпион","Патологоанатом","Телохранитель","Ядерный инженер","Контрабандист","Следователь","Укротитель тигров",
+    "Минёр","Нейрохирург","Лётчик-испытатель","Крупье","Снайпер","Дайвер","Пожарный","Прокурор","Взломщик","Гробовщик","Двойной агент","Ликвидатор"
+  ],
+  "Персонаж": [
+    "Железный человек","Капитан Америка","Тор","Халк","Человек-паук","Локи","Танос","Дедпул","Чёрная пантера","Доктор Стрэндж",
+    "Бэтмен","Джокер","Супермен","Чудо-женщина","Флэш","Харли Квинн",
+    "Дарт Вейдер","Йода","Хан Соло","Кайло Рен","Оби-Ван Кеноби","Палпатин",
+    "Гарри Поттер","Гермиона","Волдеморт","Дамблдор","Снейп",
+    "Гэндальф","Фродо","Арагорн","Горлум","Саурон",
+    "Джек Воробей","Индиана Джонс","Терминатор","Форрест Гамп","Антон Чигур",
+    "Шерлок Холмс","Мориарти","Ганнибал Лектер","Патрик Бейтман","Уолтер Уайт","Тони Сопрано"
+  ],
+  "Мультяшный персонаж": [
+    "Губка Боб","Патрик","Том","Джерри","Шрек","Осёл из Шрека","Симба","Муфаса","Эльза","Анна",
+    "Базз Лайтер","Вуди","Немо","Валли","Миньон","Гомер Симпсон","Барт Симпсон","Питер Гриффин","Рик","Морти",
+    "Микки Маус","Bugs Bunny","Скуби-Ду","Аладдин","Мулан","Тарзан"
+  ],
+  "Персонаж игры": [
+    "Марио","Луиджи","Соник","Мастер Чиф","Кратос","Лара Крофт","Эцио Аудиторе","Агент 47","Джоэл","Элли",
+    "Геральт из Ривии","Линк","Зельда","Ганон","Пикачу","Думгай","Гордон Фримен",
+    "Артур Морган","Тревор Филлипс","Натан Дрейк","Ви"
+  ],
+  "Животное": [
+    "Лев","Тигр","Слон","Жираф","Крокодил","Панда","Волк","Лиса","Кенгуру","Горилла","Гепард","Зебра","Носорог","Бегемот","Коала","Ягуар",
+    "Осьминог","Акула","Кальмар","Медуза","Косатка","Кит","Дельфин","Мурена","Пиранья",
+    "Орёл","Попугай","Пеликан","Фламинго","Пингвин","Страус","Казуар",
+    "Питон","Кобра","Варан","Хамелеон","Игуана","Гиена","Мангуст"
+  ],
+  "Еда": [
+    "Суши","Пицца","Бургер","Тако","Лазанья","Паэлья","Борщ","Рамен","Круассан","Шашлык","Фалафель","Карри","Кимчи","Ризотто","Фондю",
+    "Чизкейк","Тирамису","Макарон","Эклер","Пахлава","Зефир","Мармелад","Трюфель","Вафля",
+    "Эспрессо","Капучино","Матча","Смузи","Лимонад","Квас","Айран","Чай масала","Кефир"
+  ],
+  "Транспорт": [
+    "Суперкар","Мотоцикл","Квадроцикл","Кабриолет","Пикап","Бронеавтомобиль",
+    "Истребитель","Бомбардировщик","Дрон","Параплан","Воздушный шар","Дирижабль","Вертолёт",
+    "Парусник","Катер","Гидроцикл","Подводная лодка","Авианосец","Каяк",
+    "Трактор","Экскаватор","Танк","БТР","Ракета","Космический шаттл","Луноход"
+  ],
+  "Страна": [
+    "Япония","Бразилия","Египет","Австралия","Норвегия","Мексика","Индия","Аргентина","Португалия","Исландия",
+    "Северная Корея","Иран","Афганистан","Колумбия","Куба","Венесуэла","Сомали",
+    "ОАЭ","Саудовская Аравия","Израиль","Турция","Греция","Италия","Испания","Франция","Германия",
+    "Таиланд","Марокко","Перу","Финляндия","Новая Зеландия","Грузия","Монголия","Эфиопия"
+  ],
+  "Знаменитость": [
+    "Илон Маск","Билл Гейтс","Стив Джобс","Марк Цукерберг","Джефф Безос",
+    "Майк Тайсон","Конор Макгрегор","Криштиану Роналду","Лионель Месси","Леброн Джеймс",
+    "Канье Уэст","Дрейк","Эминем","Jay-Z","Тупак",
+    "Леонардо ДиКаприо","Брэд Питт","Том Круз","Роберт Дауни мл.","Арнольд Шварценеггер",
+    "Бейонсе","Рианна","Ким Кардашьян","Майкл Джексон","Дэвид Боуи"
+  ],
+  "Исторический деятель": [
+    "Наполеон","Гитлер","Сталин","Ленин","Пётр Первый","Иван Грозный","Чингисхан","Александр Македонский",
+    "Юлий Цезарь","Клеопатра","Нерон","Карл Великий","Марк Аврелий",
+    "Авраам Линкольн","Джордж Вашингтон","Джон Кеннеди","Черчилль","де Голль","Муссолини",
+    "Мао Цзэдун","Пол Пот","Саддам Хусейн","Каддафи","Кастро"
+  ]
+};
+var catKeys = Object.keys(CATS);
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+var total = 4, current = 1, spyIdx = -1;
+var category = '', word = '', revealed = false, startX = null;
+
+/* ══════════════════════════════════════
+   SCREEN SWITCH
+══════════════════════════════════════ */
+function show(id) {
+  ['intro','setup','card-screen','end-screen'].forEach(function(s) {
+    var el = document.getElementById(s);
+    if (s === id) { el.classList.remove('hidden'); }
+    else { el.classList.add('hidden'); }
+  });
+}
+
+/* ══════════════════════════════════════
+   GAME LOGIC
+══════════════════════════════════════ */
+function startGame() {
+  haptic('medium');
+  category = catKeys[Math.floor(Math.random() * catKeys.length)];
+  word = CATS[category][Math.floor(Math.random() * CATS[category].length)];
+  spyIdx = Math.floor(Math.random() * total);
+  current = 1;
+  show('card-screen');
+  loadCard();
+}
+
+function loadCard() {
+  var isSpy = (current - 1) === spyIdx;
+  document.getElementById('cat-name').textContent = category;
+  document.getElementById('player-num').textContent = current;
+
+  var front = document.getElementById('c-front');
+  if (isSpy) {
+    front.classList.add('is-spy');
+    document.getElementById('c-role').textContent = '🕵️  ТЫ ШПИОН';
+    document.getElementById('c-word').textContent = 'Не раскрывай себя!';
+  } else {
+    front.classList.remove('is-spy');
+    document.getElementById('c-role').textContent = 'Твоё слово';
+    document.getElementById('c-word').textContent = word;
+  }
+
+  revealed = false;
+  var shell = document.getElementById('card-shell');
+  shell.classList.remove('revealed','animating');
+  var passBtn = document.getElementById('pass-btn');
+  passBtn.classList.remove('show');
+  passBtn.textContent = current < total
+    ? ('Передать игроку ' + (current + 1))
+    : 'Все ознакомились';
+}
+
+function revealCard() {
+  if (revealed) return;
+  revealed = true;
+  haptic('light');
+  var shell = document.getElementById('card-shell');
+  shell.classList.add('animating');
+  setTimeout(function() {
+    shell.classList.remove('animating');
+    shell.classList.add('revealed');
+    document.getElementById('pass-btn').classList.add('show');
+    // Если шпион — haptic особый
+    var isSpy = (current - 1) === spyIdx;
+    haptic(isSpy ? 'warning' : 'success');
+  }, 180);
+}
+
+function updateChips() {
+  document.querySelectorAll('#chips .chip').forEach(function(el) {
+    var n = parseInt(el.getAttribute('data-i'));
+    el.classList.toggle('off', n > total);
+  });
+}
+
+/* ══════════════════════════════════════
+   EVENT LISTENERS
+══════════════════════════════════════ */
+document.getElementById('intro').addEventListener('click', function() {
+  haptic('light');
+  show('setup');
+});
+
+document.getElementById('minus').addEventListener('click', function() {
+  if (total > 3) { total--; document.getElementById('cnt-val').textContent = total; updateChips(); haptic('select'); }
+});
+document.getElementById('plus').addEventListener('click', function() {
+  if (total < 5) { total++; document.getElementById('cnt-val').textContent = total; updateChips(); haptic('select'); }
+});
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('restart-btn').addEventListener('click', function() {
+  haptic('light'); show('setup');
+});
+document.getElementById('pass-btn').addEventListener('click', function() {
+  haptic('light');
+  if (current < total) { current++; loadCard(); }
+  else { show('end-screen'); haptic('success'); }
+});
+
+// Card reveal — tap + swipe
+var cBack = document.getElementById('c-back');
+cBack.addEventListener('touchstart', function(e) {
+  startX = e.touches[0].clientX;
+}, { passive: true });
+cBack.addEventListener('touchend', function(e) {
+  if (startX !== null) {
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 22) revealCard();
+    startX = null;
+  }
+}, { passive: true });
+cBack.addEventListener('click', revealCard);
+
+// Кнопка «Назад» в Telegram
+if (tg) {
+  tg.onEvent('backButtonClicked', function() {
+    haptic('light');
+    var screens = ['end-screen','card-screen'];
+    for (var i = 0; i < screens.length; i++) {
+      var el = document.getElementById(screens[i]);
+      if (!el.classList.contains('hidden')) {
+        show('setup'); return;
+      }
+    }
+    var setup = document.getElementById('setup');
+    if (!setup.classList.contains('hidden')) { show('intro'); }
+  });
+}
+</script>
+</body>
+</html>
