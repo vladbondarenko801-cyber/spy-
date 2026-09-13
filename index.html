@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Базару Нет — Шпион</title>
+<title>Базару Нет — Шпион: Dacha Update</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -16,32 +16,104 @@
 
 <!-- Telegram Mini App SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- Display font (Cyrillic-supporting) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --bg:       #0a0a0f;
-  --card:     #14141e;
-  --border:   #252535;
-  --red:      #e8001d;
-  --gold:     #ffd700;
-  --text:     #f0f0f0;
-  --muted:    rgba(240,240,240,0.35);
-  --btn-h:    56px;
-  --radius:   16px;
+  --bg: #0a0a0f;
+  --ink: #050508;
+  --card: #14141e;
+  --border: #252535;
+  --red: #e8001d;
+  --red-deep: #9e0016;
+  --gold: #ffd700;
+  --text: #f0f0f0;
+  --muted: rgba(var(--fg-rgb),0.35);
+  --btn-h: 56px;
+  --radius: 16px;
+  --font-display: 'Unbounded', -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --fg-rgb: 240,240,240;
+  --bg-glow: #12121c;
 }
 
 /* Подхватываем тему Telegram если есть */
 body.tg-theme {
-  --bg:     var(--tg-theme-bg-color, #0a0a0f);
-  --card:   var(--tg-theme-secondary-bg-color, #14141e);
-  --text:   var(--tg-theme-text-color, #f0f0f0);
-  --muted:  var(--tg-theme-hint-color, rgba(240,240,240,0.35));
+  --bg: var(--tg-theme-bg-color, #0a0a0f);
+  --card: var(--tg-theme-secondary-bg-color, #14141e);
+  --text: var(--tg-theme-text-color, #f0f0f0);
+  --muted: var(--tg-theme-hint-color, rgba(var(--fg-rgb),0.35));
+}
+
+/* Светлая тема — переключается кнопкой в углу */
+body.theme-light {
+  --bg: #f4f1ea;
+  --ink: #e6e1d6;
+  --bg-glow: #fffdf8;
+  --card: #ffffff;
+  --border: #e3ddd0;
+  --text: #1a1a1f;
+  --muted: rgba(20,20,25,0.4);
+  --gold: #a9790a;
+  --fg-rgb: 20,20,25;
+}
+body.theme-light .noise-overlay { opacity: 0.03; mix-blend-mode: multiply; }
+body.theme-light .intro-title-main { color: #1a1a1f; }
+body.theme-light .theme-toggle { background: var(--card); }
+body.theme-light .chip {
+  background: rgba(20,20,25,0.05); color: rgba(20,20,25,0.7);
+  border-color: rgba(20,20,25,0.14);
+}
+body.theme-light .chip.off {
+  background: rgba(20,20,25,0.02); color: rgba(20,20,25,0.18);
+  border-color: rgba(20,20,25,0.06);
+}
+body.theme-light .cat-chip:not(.off) {
+  background: rgba(169,121,10,0.12); color: var(--gold);
+  border-color: rgba(169,121,10,0.4);
+}
+body.theme-light .card-shell .c-hint,
+body.theme-light .card-shell .c-eye { color: rgba(20,20,25,0.3); }
+body.theme-light .c-front:not(.is-spy) {
+  background: linear-gradient(140deg, #fff8ea 0%, #ffe2a8 100%);
+  border-color: rgba(169,121,10,0.32);
+  box-shadow: 0 18px 45px rgba(169,121,10,0.16);
+}
+body.theme-light .c-front:not(.is-spy) .c-role { color: rgba(20,20,25,0.5); }
+body.theme-light .c-front:not(.is-spy) .c-word { color: #1a1a1f; }
+/* faint decorative labels were tuned for a near-black background;
+   on a light background they need a stronger tint to stay readable */
+body.theme-light .intro-tap,
+body.theme-light .cat-hint,
+body.theme-light .c-hint {
+  color: rgba(20,20,25,0.55);
+}
+body.theme-light .intro-eyebrow,
+body.theme-light .cat-eyebrow,
+body.theme-light .end-sub {
+  color: rgba(20,20,25,0.42);
+}
+body.theme-light .dacha-stamp {
+  border-color: rgba(169,121,10,0.6);
+  background: radial-gradient(circle at 30% 30%, rgba(232,0,29,0.08), rgba(20,20,25,0.02) 70%);
+  box-shadow: 0 2px 10px rgba(20,20,25,0.08);
+}
+body.theme-light .edition-number {
+  color: #8a6508;
+  text-shadow: none;
+}
+body.theme-light .edition-label {
+  color: rgba(138,101,8,0.6);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 html, body {
   height: 100%; width: 100%;
-  background: var(--bg);
+  background: radial-gradient(120% 120% at 50% -10%, var(--bg-glow) 0%, var(--bg) 45%, var(--ink) 100%);
   color: var(--text);
   font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
   overflow: hidden;
@@ -49,9 +121,117 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* subtle film-grain overlay, adds depth without motion */
+.noise-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 140px 140px;
+}
+
+/* dark/light theme switch */
+.theme-toggle-wrap {
+  position: fixed;
+  top: max(env(safe-area-inset-top, 16px), 16px);
+  left: 16px;
+  z-index: 70;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.theme-toggle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.theme-toggle:active { transform: scale(0.92); }
+/* тему можно менять только в меню — не во время самой игры */
+body.in-game .theme-toggle-wrap { display: none; }
+.theme-toggle-label {
+  font-size: 7px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(var(--fg-rgb),0.4);
+}
+
+/* category picker — bottom sheet modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: flex-end; justify-content: center;
+  transition: opacity 0.22s ease;
+}
+.modal-overlay.hidden { opacity: 0; pointer-events: none; }
+.modal-sheet {
+  width: 100%; max-width: 420px;
+  max-height: 72vh;
+  background: var(--card);
+  border-top-left-radius: 22px; border-top-right-radius: 22px;
+  border: 1px solid var(--border); border-bottom: none;
+  padding: 22px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.4);
+  transform: translateY(0);
+  transition: transform 0.26s cubic-bezier(.22,1,.36,1);
+}
+.modal-overlay.hidden .modal-sheet { transform: translateY(24px); }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 700; color: var(--text);
+}
+.modal-close {
+  background: none; border: none;
+  color: var(--gold); font-weight: 700; font-size: 11px;
+  letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+  padding: 6px 4px;
+}
+
+/* ненавязчивая ссылка "поддержать автора" */
+.support-link {
+  margin-top: 16px;
+  background: none; border: none;
+  font-family: inherit;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(var(--fg-rgb),0.25);
+  cursor: pointer;
+}
+.support-link:active { opacity: 0.6; }
+
+.support-card-number {
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 700; letter-spacing: 1px;
+  text-align: center; color: var(--gold);
+  background: rgba(var(--fg-rgb),0.05);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 4px 0 12px;
+  cursor: pointer;
+  user-select: all;
+}
+.support-card-number:active { transform: scale(0.98); }
+
+/* пасхалка по тапам на "ШПИОН" */
+.easter-author {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 800;
+  text-align: center; color: var(--text);
+  margin-bottom: 10px;
+}
+.easter-credit {
+  font-size: 10px; letter-spacing: 1px;
+  text-align: center; color: var(--muted);
+}
+
 /* ═══════════════════════════════════
    SCREENS
-═══════════════════════════════════ */
+   ═══════════════════════════════════ */
 .screen {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -60,7 +240,7 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px);
-  background: var(--bg);
+  background: transparent;
   transition: opacity 0.28s ease, transform 0.28s ease;
   z-index: 1;
   will-change: opacity, transform;
@@ -73,23 +253,25 @@ html, body {
 
 /* ═══════════════════════════════════
    INTRO
-═══════════════════════════════════ */
+   ═══════════════════════════════════ */
 #intro { cursor: pointer; z-index: 10; gap: 0; }
 
 .intro-eyebrow {
   font-size: 10px; font-weight: 600;
   letter-spacing: 5px; text-transform: uppercase;
-  color: rgba(240,240,240,0.28); margin-bottom: 14px;
+  color: rgba(var(--fg-rgb),0.28); margin-bottom: 14px;
 }
 .intro-title-main {
-  font-size: clamp(78px, 24vw, 110px);
-  font-weight: 900; line-height: 0.88;
-  letter-spacing: -3px; text-align: center; color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(58px, 18vw, 84px);
+  font-weight: 900; line-height: 0.92;
+  letter-spacing: -1px; text-align: center; color: #fff;
 }
 .intro-title-red {
-  font-size: clamp(78px, 24vw, 110px);
-  font-weight: 900; line-height: 0.88;
-  letter-spacing: -3px; text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(58px, 18vw, 84px);
+  font-weight: 900; line-height: 0.92;
+  letter-spacing: -1px; text-align: center;
   color: var(--red);
   text-shadow: 0 0 50px rgba(232,0,29,0.55);
   margin-bottom: 18px;
@@ -99,9 +281,10 @@ html, body {
   align-items: center; gap: 1px;
 }
 .edition-number {
-  font-size: clamp(52px, 16vw, 76px);
-  font-weight: 900; color: var(--gold);
-  line-height: 1; letter-spacing: 4px;
+  font-family: var(--font-display);
+  font-size: clamp(42px, 13vw, 60px);
+  font-weight: 700; color: var(--gold);
+  line-height: 1; letter-spacing: 2px;
   text-shadow: 0 0 24px rgba(255,215,0,0.38);
 }
 .edition-label {
@@ -114,27 +297,63 @@ html, body {
 }
 .intro-tap {
   font-size: 8px; letter-spacing: 4px;
-  text-transform: uppercase; color: rgba(240,240,240,0.18);
+  text-transform: uppercase; color: rgba(var(--fg-rgb),0.18);
   animation: blink 2.2s ease-in-out infinite;
 }
 @keyframes blink { 0%,100%{opacity:.18} 50%{opacity:.6} }
 
+/* "Dacha Update" stamp — the one deliberate flourish on the app */
+.dacha-stamp {
+  position: absolute;
+  top: max(env(safe-area-inset-top, 16px), 16px);
+  right: 16px;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255,215,0,0.55);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  background: radial-gradient(circle at 30% 30%, rgba(232,0,29,0.14), transparent 70%);
+  transform: rotate(-14deg) scale(0.85);
+  opacity: 0;
+  animation: stampIn 0.55s cubic-bezier(.34,1.56,.64,1) 0.6s forwards;
+}
+.dacha-stamp span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+@keyframes stampIn {
+  0%   { opacity: 0; transform: rotate(-30deg) scale(0.5); }
+  70%  { opacity: 1; transform: rotate(-11deg) scale(1.05); }
+  100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+}
+
 /* ═══════════════════════════════════
    SETUP
-═══════════════════════════════════ */
+   ═══════════════════════════════════ */
+#setup {
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-top: max(env(safe-area-inset-top, 24px), 40px);
+}
 .setup-logo {
-  font-size: clamp(60px, 18vw, 84px);
-  font-weight: 900; letter-spacing: 5px;
+  font-family: var(--font-display);
+  font-size: clamp(46px, 14vw, 64px);
+  font-weight: 800; letter-spacing: 2px;
   color: var(--red); line-height: 1;
   text-shadow: 0 0 32px rgba(232,0,29,0.38);
 }
 .setup-sub {
   font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
-  color: var(--muted); margin-top: 4px; margin-bottom: 36px;
+  color: var(--muted); margin-top: 6px; margin-bottom: 36px;
 }
 .field-label {
   font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 12px; align-self: flex-start;
+  color: var(--muted); margin-bottom: 12px; align-self: center; text-align: center;
 }
 .counter-row {
   display: flex; align-items: center;
@@ -150,8 +369,10 @@ html, body {
 }
 .cnt-btn:active { background: var(--border); }
 .cnt-val {
-  flex: 1; text-align: center; font-size: 42px; font-weight: 900;
-  color: #fff; line-height: 64px;
+  flex: 1; text-align: center;
+  font-family: var(--font-display);
+  font-size: 38px; font-weight: 700;
+  color: var(--text); line-height: 64px;
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
 }
@@ -163,18 +384,35 @@ html, body {
 .chip {
   font-size: 8px; font-weight: 600; letter-spacing: 2px;
   text-transform: uppercase; padding: 7px 14px; border-radius: 8px;
-  background: rgba(255,255,255,0.07); color: rgba(240,240,240,0.78);
+  background: rgba(255,255,255,0.07); color: rgba(var(--fg-rgb),0.78);
   border: 1px solid rgba(255,255,255,0.12);
   transition: all 0.18s;
 }
 .chip.off {
-  background: rgba(255,255,255,0.02); color: rgba(240,240,240,0.14);
+  background: rgba(255,255,255,0.02); color: rgba(var(--fg-rgb),0.14);
   border-color: rgba(255,255,255,0.05);
+}
+.cat-chip {
+  cursor: pointer;
+  transition: all 0.15s, transform 0.1s;
+}
+.cat-chip:active { transform: scale(0.94); }
+.cat-chip:not(.off) {
+  background: rgba(255,215,0,0.1); color: var(--gold);
+  border-color: rgba(255,215,0,0.35);
+}
+.cat-hint {
+  font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(var(--fg-rgb),0.2); text-align: center;
+  margin-bottom: 14px;
+}
+.cat-chips-wrap {
+  margin: 0 auto 4px;
 }
 
 /* ═══════════════════════════════════
    BUTTONS
-═══════════════════════════════════ */
+   ═══════════════════════════════════ */
 .btn {
   display: flex; align-items: center; justify-content: center;
   width: 100%; max-width: 300px; height: var(--btn-h);
@@ -186,46 +424,46 @@ html, body {
   user-select: none; -webkit-user-select: none;
 }
 .btn:active { transform: scale(0.96); opacity: 0.88; }
-
 .btn-red {
-  background: var(--red); color: #fff;
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%);
+  color: #fff;
   box-shadow: 0 8px 28px rgba(232,0,29,0.32);
 }
 .btn-ghost {
-  background: var(--card); color: rgba(240,240,240,0.6);
+  background: var(--card); color: rgba(var(--fg-rgb),0.6);
   border: 1px solid var(--border);
 }
+#cat-select-btn { margin-bottom: 22px; }
 
 /* ═══════════════════════════════════
    CARD SCREEN
-═══════════════════════════════════ */
+   ═══════════════════════════════════ */
 #card-screen {
   justify-content: space-between;
   padding-top: max(env(safe-area-inset-top, 0px), 32px);
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 28px);
   padding-left: 20px; padding-right: 20px;
 }
-
 .cat-block {
   width: 100%; text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
 .cat-eyebrow {
   font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
-  color: rgba(240,240,240,0.26);
+  color: rgba(var(--fg-rgb),0.26);
 }
 .cat-name {
   font-size: clamp(17px, 5vw, 22px); font-weight: 800;
-  color: #fff; line-height: 1.2;
+  color: var(--text); line-height: 1.2;
 }
-
 .player-block { text-align: center; }
 .player-eyebrow {
   font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
   color: var(--muted);
 }
 .player-number {
-  font-size: 56px; font-weight: 900; color: var(--text); line-height: 1.05;
+  font-family: var(--font-display);
+  font-size: 48px; font-weight: 700; color: var(--text); line-height: 1.1;
 }
 
 /* THE CARD */
@@ -241,7 +479,6 @@ html, body {
   align-items: center; justify-content: center;
   padding: 20px; gap: 8px;
 }
-
 /* BACK */
 .c-back {
   background: var(--card);
@@ -249,11 +486,11 @@ html, body {
   cursor: pointer;
   user-select: none; -webkit-user-select: none;
 }
-.c-back:active { background: #1a1a28; }
+.c-back:active { background: var(--border); }
 .c-eye { font-size: 28px; opacity: 0.2; }
 .c-hint {
   font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
-  color: rgba(240,240,240,0.18); text-align: center;
+  color: rgba(var(--fg-rgb),0.18); text-align: center;
 }
 .c-dots {
   position: absolute; bottom: 13px; left:0; right:0;
@@ -282,11 +519,14 @@ html, body {
 }
 .c-role {
   font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
-  color: rgba(240,240,240,0.38);
+  color: rgba(255,255,255,0.55);
 }
 .c-word {
-  font-size: clamp(26px, 8vw, 38px); font-weight: 900;
-  letter-spacing: 0.5px; text-align: center; line-height: 1.15; color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 6.5vw, 30px); font-weight: 700;
+  letter-spacing: 0; text-align: center; line-height: 1.2; color: #fff;
+  overflow-wrap: anywhere; word-break: break-word; hyphens: auto;
+  max-width: 100%;
 }
 .c-front.is-spy .c-word { color: var(--red); }
 
@@ -296,11 +536,11 @@ html, body {
 
 @keyframes slideOff {
   from { transform: translateX(0); opacity: 1; }
-  to   { transform: translateX(108%); opacity: 0; }
+  to { transform: translateX(108%); opacity: 0; }
 }
 @keyframes slideIn {
   from { transform: translateX(-30px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(0); opacity: 1; }
 }
 .card-shell.animating .c-back {
   animation: slideOff .28s ease-in forwards;
@@ -319,22 +559,31 @@ html, body {
 
 /* ═══════════════════════════════════
    END SCREEN
-═══════════════════════════════════ */
+   ═══════════════════════════════════ */
 .end-title {
-  font-size: clamp(52px, 16vw, 72px); font-weight: 900;
-  color: var(--text); text-align: center; line-height: 1; margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 13vw, 56px); font-weight: 800;
+  color: var(--text); text-align: center; line-height: 1.05; margin-bottom: 14px;
 }
 .end-sub {
   font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-  color: rgba(240,240,240,0.24); margin-bottom: 44px; text-align: center;
+  color: rgba(var(--fg-rgb),0.24); margin-bottom: 44px; text-align: center;
   padding: 0 20px; line-height: 1.7;
 }
 </style>
 </head>
 <body>
 
+<div class="noise-overlay"></div>
+
+<div class="theme-toggle-wrap">
+  <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему">🌙</button>
+  <div class="theme-toggle-label">Сменить тему</div>
+</div>
+
 <!-- ── INTRO ── -->
 <div class="screen" id="intro">
+  <div class="dacha-stamp"><span>Dacha</span><span>Update</span></div>
   <div class="intro-eyebrow">Добро пожаловать в</div>
   <div class="intro-title-main">БАЗАРУ</div>
   <div class="intro-title-red">НЕТ</div>
@@ -348,14 +597,16 @@ html, body {
 
 <!-- ── SETUP ── -->
 <div class="screen hidden" id="setup">
-  <div class="setup-logo">ШПИОН</div>
+  <div class="setup-logo" id="setup-logo">ШПИОН</div>
   <div class="setup-sub">Социальная игра</div>
+
   <div class="field-label">Количество игроков</div>
   <div class="counter-row">
     <button class="cnt-btn" id="minus" type="button">−</button>
     <div class="cnt-val" id="cnt-val">4</div>
     <button class="cnt-btn" id="plus" type="button">+</button>
   </div>
+
   <div class="players-chips" id="chips">
     <div class="chip" data-i="1">Игрок 1</div>
     <div class="chip" data-i="2">Игрок 2</div>
@@ -363,7 +614,12 @@ html, body {
     <div class="chip" data-i="4">Игрок 4</div>
     <div class="chip off" data-i="5">Игрок 5</div>
   </div>
+
+  <div class="field-label">Категории</div>
+  <button class="btn btn-ghost" id="cat-select-btn" type="button">Выбор категорий</button>
+
   <button class="btn btn-red" id="start-btn" type="button">Начать игру</button>
+  <button class="support-link" id="support-btn" type="button">♥ Поддержать автора</button>
 </div>
 
 <!-- ── CARD ── -->
@@ -402,19 +658,58 @@ html, body {
   <button class="btn btn-red" id="restart-btn" type="button">Начать заново</button>
 </div>
 
+<!-- ── CATEGORY PICKER (modal) ── -->
+<div class="modal-overlay hidden" id="cat-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">Категории</div>
+      <button class="modal-close" id="cat-modal-close" type="button">Готово</button>
+    </div>
+    <div class="cat-hint">Нажмите, чтобы включить или выключить</div>
+    <div class="players-chips cat-chips-wrap" id="cat-chips"></div>
+  </div>
+</div>
+
+<!-- ── SUPPORT AUTHOR (modal) ── -->
+<div class="modal-overlay hidden" id="support-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">Поддержать автора</div>
+      <button class="modal-close" id="support-modal-close" type="button">Закрыть</button>
+    </div>
+    <div class="cat-hint">Если игра понравилась — можно закинуть на разработку</div>
+    <div class="support-card-number" id="support-card-number" data-num="4276410012634879">4276 4100 1263 4879</div>
+    <div class="cat-hint">Нажмите на номер, чтобы скопировать</div>
+  </div>
+</div>
+
+<!-- ── EASTER EGG (modal) ── -->
+<div class="modal-overlay hidden" id="easter-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">🕵️</div>
+      <button class="modal-close" id="easter-modal-close" type="button">Закрыть</button>
+    </div>
+    <div class="easter-author">АВТОР — Владосик Бондаренко</div>
+    <div class="easter-credit">Вдохновлено: Яныч Федоров и Ярик Галыч</div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════
    TELEGRAM MINI APP INIT
-══════════════════════════════════════ */
+   ══════════════════════════════════════ */
 var tg = window.Telegram && window.Telegram.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
   tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+
   // Применяем цветовую схему Telegram
   if (tg.colorScheme === 'dark' || !tg.colorScheme) {
     document.body.classList.add('tg-theme');
   }
+
   // Настраиваем цвет хедера под игру
   tg.setHeaderColor && tg.setHeaderColor('#0a0a0f');
   tg.setBackgroundColor && tg.setBackgroundColor('#0a0a0f');
@@ -423,13 +718,13 @@ if (tg) {
 // Haptic feedback хелпер
 function haptic(type) {
   if (!tg || !tg.HapticFeedback) return;
-  if (type === 'light')   tg.HapticFeedback.impactOccurred('light');
-  if (type === 'medium')  tg.HapticFeedback.impactOccurred('medium');
-  if (type === 'heavy')   tg.HapticFeedback.impactOccurred('heavy');
+  if (type === 'light') tg.HapticFeedback.impactOccurred('light');
+  if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+  if (type === 'heavy') tg.HapticFeedback.impactOccurred('heavy');
   if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
   if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
-  if (type === 'error')   tg.HapticFeedback.notificationOccurred('error');
-  if (type === 'select')  tg.HapticFeedback.selectionChanged();
+  if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+  if (type === 'select') tg.HapticFeedback.selectionChanged();
 }
 
 var CATS = {
@@ -445,97 +740,105 @@ var CATS = {
     "Барбершоп","Ломбард","Тату-салон","Хостел","Подвальный бар","Прачечная","Ритуальный салон","Секонд-хенд","Игровой клуб","Гадалка",
     "Университет","Военная академия","Языковая школа","Разведывательная академия","Школа поваров","Лётное училище","Кадетский корпус","Медицинский вуз"
   ],
-  "Событие": [
-    "Свадьба","Похороны","Выпускной","Карнавал","Корпоратив","Фестиваль музыки","Олимпиада","Концерт","Революция","Государственный переворот",
-    "Инаугурация президента","Судебный процесс","Пресс-конференция","Парад победы","День рождения","Новый год","Хэллоуин",
-    "Пожар","Авиакатастрофа","Землетрясение","Ограбление банка","Кораблекрушение","Эпидемия","Наводнение","Захват заложников","Теракт","Тюремный побег",
-    "Чемпионат мира","Финал Лиги чемпионов","Боксёрский поединок","Гонки Формулы 1","Аукцион","Модный показ","Кинопремьера","Вручение Оскара"
-  ],
   "Профессия": [
-    "Хирург","Дипломат","Наёмник","Шпион","Патологоанатом","Телохранитель","Ядерный инженер","Контрабандист","Следователь","Укротитель тигров",
-    "Минёр","Нейрохирург","Лётчик-испытатель","Крупье","Снайпер","Дайвер","Пожарный","Прокурор","Взломщик","Гробовщик","Двойной агент","Ликвидатор"
+    "Хирург","Дипломат","Наёмник","Шпион","Телохранитель","Контрабандист","Следователь","Крупье","Снайпер","Пожарный","Прокурор","Взломщик",
+    "Стример","Инфлюенсер","Криптотрейдер","SMM-менеджер","Модератор чата","Разработчик игр","Таргетолог","Копирайтер"
   ],
-  "Персонаж": [
-    "Железный человек","Капитан Америка","Тор","Халк","Человек-паук","Локи","Танос","Дедпул","Чёрная пантера","Доктор Стрэндж",
-    "Бэтмен","Джокер","Супермен","Чудо-женщина","Флэш","Харли Квинн",
-    "Дарт Вейдер","Йода","Хан Соло","Кайло Рен","Оби-Ван Кеноби","Палпатин",
-    "Гарри Поттер","Гермиона","Волдеморт","Дамблдор","Снейп",
-    "Гэндальф","Фродо","Арагорн","Горлум","Саурон",
-    "Джек Воробей","Индиана Джонс","Терминатор","Форрест Гамп","Антон Чигур",
-    "Шерлок Холмс","Мориарти","Ганнибал Лектер","Патрик Бейтман","Уолтер Уайт","Тони Сопрано"
+  "Персонажи": [
+    "Железный человек (Marvel)","Капитан Америка (Marvel)","Тор (Marvel)","Халк (Marvel)","Человек-паук (Marvel)","Локи (Marvel)","Танос (Marvel)","Дедпул (Marvel)","Чёрная пантера (Marvel)","Доктор Стрэндж (Marvel)",
+    "Бэтмен (DC)","Джокер (DC)","Супермен (DC)","Харли Квинн (DC)",
+    "Дарт Вейдер (Звёздные войны)","Йода (Звёздные войны)","Кайло Рен (Звёздные войны)",
+    "Гарри Поттер (Гарри Поттер)","Гермиона (Гарри Поттер)","Волдеморт (Гарри Поттер)",
+    "Джек Воробей (Пираты Карибского моря)","Терминатор (Терминатор)","Уолтер Уайт (Во все тяжкие)",
+    "Барби (Барби)","Кен (Барби)","Уэнсдей Аддамс (Уэнсдей)","Джон Уик (Джон Уик)","Нео (Матрица)",
+    "Марио (Mario)","Соник (Sonic)","Мастер Чиф (Halo)","Кратос (God of War)","Лара Крофт (Tomb Raider)","Агент 47 (Hitman)",
+    "Джоэл (The Last of Us)","Элли (The Last of Us)","Геральт из Ривии (Ведьмак)","Линк (Zelda)","Зельда (Zelda)",
+    "Гордон Фримен (Half-Life)","Артур Морган (Red Dead Redemption 2)","Натан Дрейк (Uncharted)","Ви (Cyberpunk 2077)","Астарион (Baldur's Gate 3)","Сенуа (Hellblade)",
+    "Губка Боб (Губка Боб)","Шрек (Шрек)","Симба (Король Лев)","Эльза (Холодное сердце)",
+    "Гомер Симпсон (Симпсоны)","Питер Гриффин (Гриффины)","Рик (Рик и Морти)","Морти (Рик и Морти)","Микки Маус (Disney)",
+    "Наруто (Наруто)","Гоку (Dragon Ball)","Луффи (One Piece)","Тандзиро (Клинок, рассекающий демонов)","Сейлор Мун (Сейлор Мун)",
+    "Леви Аккерман (Атака титанов)","Сатору Годжо (Магическая битва)","Пикачу (Покемон)"
   ],
-  "Мультяшный персонаж": [
-    "Губка Боб","Патрик","Том","Джерри","Шрек","Осёл из Шрека","Симба","Муфаса","Эльза","Анна",
-    "Базз Лайтер","Вуди","Немо","Валли","Миньон","Гомер Симпсон","Барт Симпсон","Питер Гриффин","Рик","Морти",
-    "Микки Маус","Bugs Bunny","Скуби-Ду","Аладдин","Мулан","Тарзан"
+  "Знаменитости": [
+    "Илон Маск","Марк Цукерберг","Криштиану Роналду","Лионель Месси","Леброн Джеймс","Дрейк","Эминем","Леонардо ДиКаприо","Том Круз",
+    "Тейлор Свифт","Билли Айлиш","Зендая","Ариана Гранде",
+    "MrBeast","Влад А4","Дава","T2x2","Koreshzy","Evelone192","Paradeev1ch","Дима Масленников","Катя Голден","Настя Ивлеева","Юрий Дудь","Wylsacom","Tenderlybae","KuplinovPlay",
+    "Биг Бейби Тейп","Дора","MACAN","Баста","Клава Кока","ANNA ASTI","Mia Boyka","Дима Билан","Полина Гагарина","Газан","MORGENSHTERN","Ваня Дмитриенко","Скриптонит","Feduk","ЛСП","T-Fest","Инстасамка","Тимати","Егор Крид",
+    "Playboi Carti","Travis Scott","Kanye West","The Weeknd","Post Malone","Lil Uzi Vert","Central Cee","Ice Spice","Doja Cat","Metro Boomin"
   ],
-  "Персонаж игры": [
-    "Марио","Луиджи","Соник","Мастер Чиф","Кратос","Лара Крофт","Эцио Аудиторе","Агент 47","Джоэл","Элли",
-    "Геральт из Ривии","Линк","Зельда","Ганон","Пикачу","Думгай","Гордон Фримен",
-    "Артур Морган","Тревор Филлипс","Натан Дрейк","Ви"
+  "Мем": [
+    "Пантера Казань","Можно, а зачем?","Данил Колбасенко","Фа втфа пепе шнейне","Дрысясися","Тралалело Тралала","Бомбардиро Крокодило","Воздухан","Черемша",
+    "Муся, это ты? Нет, это не Муся","Шесть-семь","Панч","Пингвин-нигилист","Село Молочное","Движуха","Сова на скакалке","Танец из «Вершины»","Скибиди Туалет","Сигма","Ризз","NPC-стрим"
   ],
-  "Животное": [
-    "Лев","Тигр","Слон","Жираф","Крокодил","Панда","Волк","Лиса","Кенгуру","Горилла","Гепард","Зебра","Носорог","Бегемот","Коала","Ягуар",
-    "Осьминог","Акула","Кальмар","Медуза","Косатка","Кит","Дельфин","Мурена","Пиранья",
-    "Орёл","Попугай","Пеликан","Фламинго","Пингвин","Страус","Казуар",
-    "Питон","Кобра","Варан","Хамелеон","Игуана","Гиена","Мангуст"
-  ],
-  "Еда": [
-    "Суши","Пицца","Бургер","Тако","Лазанья","Паэлья","Борщ","Рамен","Круассан","Шашлык","Фалафель","Карри","Кимчи","Ризотто","Фондю",
-    "Чизкейк","Тирамису","Макарон","Эклер","Пахлава","Зефир","Мармелад","Трюфель","Вафля",
-    "Эспрессо","Капучино","Матча","Смузи","Лимонад","Квас","Айран","Чай масала","Кефир"
-  ],
-  "Транспорт": [
-    "Суперкар","Мотоцикл","Квадроцикл","Кабриолет","Пикап","Бронеавтомобиль",
-    "Истребитель","Бомбардировщик","Дрон","Параплан","Воздушный шар","Дирижабль","Вертолёт",
-    "Парусник","Катер","Гидроцикл","Подводная лодка","Авианосец","Каяк",
-    "Трактор","Экскаватор","Танк","БТР","Ракета","Космический шаттл","Луноход"
-  ],
-  "Страна": [
-    "Япония","Бразилия","Египет","Австралия","Норвегия","Мексика","Индия","Аргентина","Португалия","Исландия",
-    "Северная Корея","Иран","Афганистан","Колумбия","Куба","Венесуэла","Сомали",
-    "ОАЭ","Саудовская Аравия","Израиль","Турция","Греция","Италия","Испания","Франция","Германия",
-    "Таиланд","Марокко","Перу","Финляндия","Новая Зеландия","Грузия","Монголия","Эфиопия"
-  ],
-  "Знаменитость": [
-    "Илон Маск","Билл Гейтс","Стив Джобс","Марк Цукерберг","Джефф Безос",
-    "Майк Тайсон","Конор Макгрегор","Криштиану Роналду","Лионель Месси","Леброн Джеймс",
-    "Канье Уэст","Дрейк","Эминем","Jay-Z","Тупак",
-    "Леонардо ДиКаприо","Брэд Питт","Том Круз","Роберт Дауни мл.","Арнольд Шварценеггер",
-    "Бейонсе","Рианна","Ким Кардашьян","Майкл Джексон","Дэвид Боуи"
-  ],
-  "Исторический деятель": [
-    "Наполеон","Гитлер","Сталин","Ленин","Пётр Первый","Иван Грозный","Чингисхан","Александр Македонский",
-    "Юлий Цезарь","Клеопатра","Нерон","Карл Великий","Марк Аврелий",
-    "Авраам Линкольн","Джордж Вашингтон","Джон Кеннеди","Черчилль","де Голль","Муссолини",
-    "Мао Цзэдун","Пол Пот","Саддам Хусейн","Каддафи","Кастро"
+  "Цифровой мир": [
+    "TikTok","Telegram","WhatsApp","YouTube","Discord","Twitch","Spotify","ChatGPT","ВКонтакте","Ozon","Авито","МАКС","RuStore",
+    "Minecraft","Fortnite","GTA V","Roblox","Standoff 2","Brawl Stars","CS2","Valorant","Dota 2","Genshin Impact","Among Us",
+    "Bitcoin","Ethereum","Dogecoin","Shiba Inu Coin","NFT","Блокчейн","Метавселенная","TON","Pepe Coin","Смарт-контракт"
   ]
 };
 var catKeys = Object.keys(CATS);
 
 /* ══════════════════════════════════════
    STATE
-══════════════════════════════════════ */
+   ══════════════════════════════════════ */
 var total = 4, current = 1, spyIdx = -1;
 var category = '', word = '', revealed = false, startX = null;
 
+// какие категории сейчас участвуют в игре (по умолчанию — все)
+var catEnabled = {};
+catKeys.forEach(function(k) { catEnabled[k] = true; });
+
+function buildCatChips() {
+  var container = document.getElementById('cat-chips');
+  container.innerHTML = '';
+  catKeys.forEach(function(key) {
+    var chip = document.createElement('div');
+    chip.className = 'chip cat-chip' + (catEnabled[key] ? '' : ' off');
+    chip.textContent = key;
+    chip.setAttribute('data-cat', key);
+    chip.addEventListener('click', function() {
+      var activeCount = catKeys.filter(function(k) { return catEnabled[k]; }).length;
+      if (catEnabled[key] && activeCount <= 1) {
+        haptic('warning'); // нельзя выключить последнюю оставшуюся категорию
+        return;
+      }
+      catEnabled[key] = !catEnabled[key];
+      chip.classList.toggle('off');
+      haptic('select');
+      updateCatBtnLabel();
+    });
+    container.appendChild(chip);
+  });
+}
+buildCatChips();
+
+function updateCatBtnLabel() {
+  var activeCount = catKeys.filter(function(k) { return catEnabled[k]; }).length;
+  document.getElementById('cat-select-btn').textContent = 'Категории (' + activeCount + '/' + catKeys.length + ')';
+}
+updateCatBtnLabel();
+
 /* ══════════════════════════════════════
    SCREEN SWITCH
-══════════════════════════════════════ */
+   ══════════════════════════════════════ */
 function show(id) {
   ['intro','setup','card-screen','end-screen'].forEach(function(s) {
     var el = document.getElementById(s);
     if (s === id) { el.classList.remove('hidden'); }
     else { el.classList.add('hidden'); }
   });
+  // тему можно переключать только в меню (интро/настройка), не во время раунда
+  document.body.classList.toggle('in-game', id === 'card-screen' || id === 'end-screen');
 }
 
 /* ══════════════════════════════════════
    GAME LOGIC
-══════════════════════════════════════ */
+   ══════════════════════════════════════ */
 function startGame() {
   haptic('medium');
-  category = catKeys[Math.floor(Math.random() * catKeys.length)];
+  var activeCats = catKeys.filter(function(k) { return catEnabled[k]; });
+  if (activeCats.length === 0) activeCats = catKeys.slice(); // защита на всякий случай
+  category = activeCats[Math.floor(Math.random() * activeCats.length)];
   word = CATS[category][Math.floor(Math.random() * CATS[category].length)];
   spyIdx = Math.floor(Math.random() * total);
   current = 1;
@@ -551,7 +854,7 @@ function loadCard() {
   var front = document.getElementById('c-front');
   if (isSpy) {
     front.classList.add('is-spy');
-    document.getElementById('c-role').textContent = '🕵️  ТЫ ШПИОН';
+    document.getElementById('c-role').textContent = '🕵️ ТЫ ШПИОН';
     document.getElementById('c-word').textContent = 'Не раскрывай себя!';
   } else {
     front.classList.remove('is-spy');
@@ -562,6 +865,7 @@ function loadCard() {
   revealed = false;
   var shell = document.getElementById('card-shell');
   shell.classList.remove('revealed','animating');
+
   var passBtn = document.getElementById('pass-btn');
   passBtn.classList.remove('show');
   passBtn.textContent = current < total
@@ -573,12 +877,15 @@ function revealCard() {
   if (revealed) return;
   revealed = true;
   haptic('light');
+
   var shell = document.getElementById('card-shell');
   shell.classList.add('animating');
+
   setTimeout(function() {
     shell.classList.remove('animating');
     shell.classList.add('revealed');
     document.getElementById('pass-btn').classList.add('show');
+
     // Если шпион — haptic особый
     var isSpy = (current - 1) === spyIdx;
     haptic(isSpy ? 'warning' : 'success');
@@ -594,7 +901,7 @@ function updateChips() {
 
 /* ══════════════════════════════════════
    EVENT LISTENERS
-══════════════════════════════════════ */
+   ══════════════════════════════════════ */
 document.getElementById('intro').addEventListener('click', function() {
   haptic('light');
   show('setup');
@@ -611,6 +918,85 @@ document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('restart-btn').addEventListener('click', function() {
   haptic('light'); show('setup');
 });
+
+// Модалка выбора категорий
+var catModal = document.getElementById('cat-modal');
+document.getElementById('cat-select-btn').addEventListener('click', function() {
+  haptic('light');
+  catModal.classList.remove('hidden');
+});
+document.getElementById('cat-modal-close').addEventListener('click', function() {
+  haptic('light');
+  catModal.classList.add('hidden');
+});
+catModal.addEventListener('click', function(e) {
+  if (e.target === catModal) catModal.classList.add('hidden'); // тап по затемнению закрывает
+});
+
+// Поддержать автора
+var supportModal = document.getElementById('support-modal');
+document.getElementById('support-btn').addEventListener('click', function() {
+  haptic('light');
+  supportModal.classList.remove('hidden');
+});
+document.getElementById('support-modal-close').addEventListener('click', function() {
+  haptic('light');
+  supportModal.classList.add('hidden');
+});
+supportModal.addEventListener('click', function(e) {
+  if (e.target === supportModal) supportModal.classList.add('hidden');
+});
+var cardNumEl = document.getElementById('support-card-number');
+cardNumEl.addEventListener('click', function() {
+  var raw = cardNumEl.getAttribute('data-num');
+  var original = cardNumEl.textContent;
+  function showCopied() {
+    haptic('success');
+    cardNumEl.textContent = 'Скопировано!';
+    setTimeout(function() { cardNumEl.textContent = original; }, 1200);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(raw).then(showCopied).catch(function() { haptic('light'); });
+  } else {
+    haptic('light');
+  }
+});
+
+// Пасхалка: несколько быстрых тапов по "ШПИОН" на экране настройки
+var easterModal = document.getElementById('easter-modal');
+var spyTapCount = 0, spyTapTimer = null;
+document.getElementById('setup-logo').addEventListener('click', function() {
+  spyTapCount++;
+  clearTimeout(spyTapTimer);
+  spyTapTimer = setTimeout(function() { spyTapCount = 0; }, 1000);
+  if (spyTapCount >= 7) {
+    spyTapCount = 0;
+    haptic('success');
+    easterModal.classList.remove('hidden');
+  }
+});
+document.getElementById('easter-modal-close').addEventListener('click', function() {
+  haptic('light');
+  easterModal.classList.add('hidden');
+});
+easterModal.addEventListener('click', function(e) {
+  if (e.target === easterModal) easterModal.classList.add('hidden');
+});
+
+// Переключатель тёмной / светлой темы
+var themeToggle = document.getElementById('theme-toggle');
+if (localStorage.getItem('spy-theme') === 'light') {
+  document.body.classList.add('theme-light');
+  themeToggle.textContent = '☀️';
+}
+themeToggle.addEventListener('click', function() {
+  document.body.classList.toggle('theme-light');
+  var isLight = document.body.classList.contains('theme-light');
+  themeToggle.textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('spy-theme', isLight ? 'light' : 'dark');
+  haptic('light');
+});
+
 document.getElementById('pass-btn').addEventListener('click', function() {
   haptic('light');
   if (current < total) { current++; loadCard(); }
